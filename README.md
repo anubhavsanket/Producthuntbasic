@@ -1,4 +1,4 @@
-# Product Hunt Research Console
+# Producthuntbasic
 
 A lightweight local web application for researching Product Hunt launches, storing them locally, filtering them quickly, and annotating promising products for later follow-up.
 
@@ -12,12 +12,7 @@ A lightweight local web application for researching Product Hunt launches, stori
 - **CSV Export** — Export filtered results with topics, makers, notes, and URLs for external analysis
 - **Settings UI** — Configure your Product Hunt token and default sync mode from the browser
 
-## Prerequisites
-
-- Python 3.11 or later
-- A [Product Hunt Developer Token](https://www.producthunt.com/v2/oauth/applications)
-
-## Setup
+## Quick Start (Windows)
 
 ### 1. Clone the repository
 
@@ -26,43 +21,60 @@ git clone <repository-url>
 cd Producthuntbasic
 ```
 
-### 2. Create a virtual environment
+### 2. Run the application
 
 ```bash
+run.bat
+```
+
+That's it. The script handles everything automatically:
+
+| Step | What happens |
+|------|-------------|
+| First run (no Python) | Downloads Python 3.11.9 embedded (~8 MB), extracts locally, installs pip |
+| First run (Python exists) | Creates virtual environment, installs dependencies |
+| Subsequent runs | Starts the server immediately |
+
+Once running, open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+
+### What `run.bat` does
+
+1. Checks for `python` or `python3` in your system PATH
+2. If not found, checks for a local Python in `.python\`
+3. If neither exists, downloads Python 3.11.9 embedded from python.org
+4. Installs pip and creates a virtual environment
+5. Installs all dependencies from `requirements.txt`
+6. Starts the FastAPI server on `http://127.0.0.1:8000`
+
+No admin rights required. Everything stays in the project folder.
+
+## Manual Setup (All Platforms)
+
+If you prefer to set things up yourself or are on macOS/Linux:
+
+### Prerequisites
+
+- Python 3.11 or later
+- A [Product Hunt Developer Token](https://www.producthunt.com/v2/oauth/applications)
+
+### Setup
+
+```bash
+# Create virtual environment
 python -m venv .venv
-```
 
-**Windows (PowerShell):**
-```bash
+# Activate it
+# Windows PowerShell:
 .venv\Scripts\activate
-```
-
-**macOS / Linux:**
-```bash
+# macOS / Linux:
 source .venv/bin/activate
-```
 
-### 3. Install dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 4. Run the application
-
-**Windows:**
-```bash
-.\run.bat
-```
-
-**Or manually (all platforms):**
-```bash
+# Run the server
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-
-### 5. Open in browser
-
-Navigate to [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ## Getting a Product Hunt Developer Token
 
@@ -132,7 +144,7 @@ Producthuntbasic/
 │       ├── detail.html
 │       └── settings.html
 ├── requirements.txt
-├── run.bat              # Windows startup script
+├── run.bat              # Auto-setup & launch script (Windows)
 ├── .env                 # Environment variables (token, sync mode)
 ├── .env.example         # Example environment file
 └── prd.md               # Product Requirements Document
