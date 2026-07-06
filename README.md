@@ -17,7 +17,7 @@ A lightweight local web application for researching Product Hunt launches, stori
 ### 1. Clone the repository
 
 ```bash
-git clone [<repository-url>](https://github.com/anubhavsanket/Producthuntbasic.git)]
+git clone (https://github.com/anubhavsanket/Producthuntbasic.git)
 cd Producthuntbasic
 ```
 
