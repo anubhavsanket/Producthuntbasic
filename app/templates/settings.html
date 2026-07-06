@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Producthuntbasic{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-8">
+    <h2 class="text-3xl font-bold text-slate-900">Application Settings</h2>
+    
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+        <form action="/settings" method="post" class="space-y-6">
+            <div class="space-y-2">
+                <label for="token" class="text-sm font-bold text-slate-700">Product Hunt Developer Token</label>
+                <input type="password" id="token" name="token" value="{{ token or '' }}" placeholder="Enter your developer token" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+            </div>
+            
+            <div class="space-y-2">
+                <label for="sync_mode" class="text-sm font-bold text-slate-700">Default Sync Mode</label>
+                <select id="sync_mode" name="sync_mode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+                    <option value="today" {% if sync_mode == 'today' %}selected{% endif %}>Sync Today's Launches (Recommended)</option>
+                    <option value="recent_7_days" {% if sync_mode == 'recent_7_days' %}selected{% endif %}>Sync Last 7 Days of Launches</option>
+                </select>
+            </div>
+            
+            <!-- Simplified button to ensure visibility -->
+            <button type="submit" style="background-color: #1e293b; color: white; width: 100%; padding: 1rem; border-radius: 0.75rem; font-weight: bold; font-size: 1.125rem;">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

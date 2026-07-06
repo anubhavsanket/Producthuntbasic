@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Producthuntbasic{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff5f2',
+                            100: '#ffe6df',
+                            500: '#da552f', # Product Hunt Orange
+                            600: '#c5431e',
+                            700: '#a33314',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col md:flex-row text-slate-800">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col flex-shrink-0">
+        <!-- Logo Header -->
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="h-10 w-10 bg-brand-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <i class="fa-brands fa-product-hunt text-white text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-none">Producthuntbasic</h1>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-4 py-6 space-y-1">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors {% if active_page == 'dashboard' %}bg-brand-500 text-white shadow-md shadow-brand-500/10{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-chart-line text-lg w-5"></i>
+                Dashboard
+            </a>
+            <a href="/launches" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors {% if active_page == 'launches' %}bg-brand-500 text-white shadow-md shadow-brand-500/10{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-rocket text-lg w-5"></i>
+                Browse Launches
+            </a>
+            <a href="/settings" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors {% if active_page == 'settings' %}bg-brand-500 text-white shadow-md shadow-brand-500/10{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <i class="fa-solid fa-sliders text-lg w-5"></i>
+                Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-y-auto h-full">
+        <!-- Top bar/header if needed, otherwise content -->
+        <div class="flex-1 p-6 lg:p-10 max-w-7xl w-full mx-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

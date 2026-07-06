@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Launches - Producthuntbasic{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-900 font-sans">Product Hunt Launches</h2>
+            <p class="text-slate-500 mt-1">Browse, filter, shortlist, and add custom notes to locally stored startups.</p>
+        </div>
+        <div>
+            <!-- CSV Export button with current filters -->
+            <button id="export-btn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 py-2.5 font-bold text-sm border border-emerald-700 shadow-md shadow-emerald-600/10 transition" onclick="triggerCsvExport()">
+                <i class="fa-solid fa-file-csv text-base"></i>
+                Export Results to CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Panel Form -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <form id="filters-form" method="get" action="/launches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Keyword search -->
+            <div class="space-y-1.5 col-span-1 md:col-span-2">
+                <label for="search" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Search Keywords</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="search" name="search" value="{{ search or '' }}" placeholder="Search name, tagline, description, notes..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+                </div>
+            </div>
+
+            <!-- Topic filter -->
+            <div class="space-y-1.5">
+                <label for="topic" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Topic / Category</label>
+                <select id="topic" name="topic" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+                    <option value="">All Topics</option>
+                    {% for t in topics %}
+                    <option value="{{ t.id }}" {% if current_topic == t.id %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Status Label filter -->
+            <div class="space-y-1.5">
+                <label for="status" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Research Status</label>
+                <select id="status" name="status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+                    <option value="">All Statuses</option>
+                    <option value="shortlisted" {% if current_status == 'shortlisted' %}selected{% endif %}>⭐ Shortlisted</option>
+                    <option value="interesting" {% if current_status == 'interesting' %}selected{% endif %}>💡 Interesting</option>
+                    <option value="follow_up" {% if current_status == 'follow_up' %}selected{% endif %}>📅 Follow Up</option>
+                    <option value="none" {% if current_status == 'none' %}selected{% endif %}>Unannotated / None</option>
+                </select>
+            </div>
+
+            <!-- Date Range: Start -->
+            <div class="space-y-1.5">
+                <label for="start_date" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Launch Date From</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+            </div>
+
+            <!-- Date Range: End -->
+            <div class="space-y-1.5">
+                <label for="end_date" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Launch Date To</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+            </div>
+
+            <!-- Action buttons -->
+            <div class="col-span-1 md:col-span-2 flex items-end gap-3 pt-2">
+                <button type="submit" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-2 px-4 font-bold text-sm border border-slate-950 shadow-sm transition">
+                    <i class="fa-solid fa-filter mr-1.5"></i> Apply Filters
+                </button>
+                <a href="/launches" class="flex-1 inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl py-2 px-4 font-bold text-sm transition">
+                    <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset All
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="flex items-center justify-between">
+        <span class="text-sm font-semibold text-slate-500">
+            Found {{ total }} product{{ 's' if total != 1 else '' }} in database
+        </span>
+    </div>
+
+    <!-- Launches List / Table Grid -->
+    <div class="space-y-4">
+        {% if products %}
+            {% for product in products %}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition p-6 flex flex-col lg:flex-row gap-6 relative">
+                <!-- Shortlist Indicator Overlay top-right -->
+                <div class="absolute top-6 right-6 flex items-center gap-2">
+                    <!-- HTMX Shortcut Shortlist Button -->
+                    <button hx-post="/launches/{{ product.id }}/toggle-shortlist" 
+                            hx-target="this" 
+                            hx-swap="outerHTML" 
+                            class="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition text-slate-400 hover:text-amber-500"
+                            title="Toggle Shortlist">
+                        {% if product.note and product.note.status_label == 'shortlisted' %}
+                        <i class="fa-solid fa-star text-amber-400 text-lg"></i>
+                        {% else %}
+                        <i class="fa-regular fa-star text-slate-400 text-lg hover:text-amber-500"></i>
+                        {% endif %}
+                    </button>
+                    
+                    <!-- Status Label badge -->
+                    <div class="status-badge-container">
+                        {% if product.note and product.note.status_label == 'shortlisted' %}
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-700">⭐ Shortlisted</span>
+                        {% elif product.note and product.note.status_label == 'interesting' %}
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">💡 Interesting</span>
+                        {% elif product.note and product.note.status_label == 'follow_up' %}
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-bold text-indigo-700">📅 Follow Up</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Product Content -->
+                <div class="flex-1 space-y-4">
+                    <!-- Title & Tagline -->
+                    <div class="space-y-1 max-w-[85%]">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-xl font-bold text-slate-900 leading-tight">
+                                {{ product.name }}
+                            </h3>
+                            <span class="text-xs text-slate-400 font-semibold flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5">
+                                <i class="fa-regular fa-calendar"></i>
+                                {{ product.created_at.strftime('%Y-%m-%d') }}
+                            </span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-500 leading-normal">{{ product.tagline }}</p>
+                    </div>
+
+                    <!-- Description -->
+                    {% if product.description %}
+                    <p class="text-xs text-slate-600 leading-relaxed max-w-4xl bg-slate-50 p-3 rounded-xl border border-slate-100">{{ product.description }}</p>
+                    {% endif %}
+
+                    <!-- Topics (Badges) -->
+                    {% if product.topics %}
+                    <div class="flex flex-wrap gap-1.5 items-center">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Topics:</span>
+                        {% for t in product.topics %}
+                        <span class="inline-flex items-center rounded-lg bg-slate-100 border border-slate-200 px-2 py-0.5 text-xs text-slate-600 font-semibold">{{ t.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Makers -->
+                    {% if product.makers %}
+                    <div class="flex flex-wrap gap-1.5 items-center text-xs text-slate-500">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Makers:</span>
+                        {% for m in product.makers %}
+                        <a href="{{ m.profile_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-slate-600 hover:text-brand-500 font-medium bg-slate-50 hover:bg-brand-50/50 border border-slate-100 hover:border-brand-100 rounded-lg px-2 py-0.5 transition">
+                            <i class="fa-regular fa-user text-[10px]"></i> {{ m.name }} (@{{ m.username }})
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Custom note section -->
+                    {% if product.note and product.note.text %}
+                    <div class="bg-indigo-50/40 border border-indigo-100/50 rounded-xl p-3 flex gap-2.5 items-start">
+                        <div class="text-indigo-500 mt-0.5"><i class="fa-regular fa-comment-dots text-sm"></i></div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-500 leading-none">Research Annotation</p>
+                            <p class="text-xs text-slate-700 font-medium mt-1 italic">{{ product.note.text }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Quick Actions -->
+                <div class="lg:w-48 flex lg:flex-col justify-end gap-2.5 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-6 flex-shrink-0">
+                    <!-- Metric votes/comments info -->
+                    <div class="hidden lg:flex flex-col gap-2 mb-auto">
+                        <div class="flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                            <span class="h-6 w-6 rounded-md bg-orange-50 border border-orange-100 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-circle-chevron-up"></i></span>
+                            <span>{{ product.votes }} Votes</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                            <span class="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center"><i class="fa-regular fa-comment"></i></span>
+                            <span>{{ product.comments_count }} Comments</span>
+                        </div>
+                    </div>
+
+                    <!-- External links -->
+                    <div class="flex w-full gap-2">
+                        {% if product.website %}
+                        <a href="{{ product.website }}" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 py-2 px-3 text-xs font-bold text-slate-700 transition" title="Visit Company Website">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Web
+                        </a>
+                        {% endif %}
+                        <a href="{{ product.product_hunt_url }}" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-100 bg-brand-50 hover:bg-brand-100/70 py-2 px-3 text-xs font-bold text-brand-600 transition" title="Open Product Hunt Page">
+                            <i class="fa-brands fa-product-hunt"></i> Post
+                        </a>
+                    </div>
+
+                    <!-- View & Research Detail button -->
+                    <a href="/launches/{{ product.id }}" class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white border border-slate-950 py-2 px-4 text-xs font-bold transition">
+                        <i class="fa-solid fa-pen-to-square"></i> Annotate & Review
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty state -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-xl mx-auto shadow-sm">
+                <div class="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 mx-auto border border-slate-100 mb-4">
+                    <i class="fa-solid fa-rocket text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">No Launches Found</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    There are no launches in the local database matching your filters, or you haven't performed a Product Hunt synchronization yet.
+                </p>
+                <div class="mt-6 flex justify-center gap-3">
+                    <a href="/" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-5 py-2.5 border border-brand-600 transition">
+                        <i class="fa-solid fa-arrows-rotate"></i> Go Sync Now
+                    </a>
+                    <a href="/launches" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm px-5 py-2.5 transition">
+                        Clear All Filters
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function triggerCsvExport() {
+        const form = document.getElementById('filters-form');
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        for (const [key, value] of formData.entries()) {
+            if (value) {
+                params.append(key, value);
+            }
+        }
+        
+        // Redirect to export route
+        window.location.href = '/export/csv?' + params.toString();
+    }
+</script>
+{% endblock %}
